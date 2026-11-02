@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0A0E14">
   <title>Horse Plinko Cyber Challenge 4 | Ty Montgomery</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="../../style.css">
   <style>
     /* Article-specific styling; the rest of the site continues to use style.css. */
     :root { color-scheme: dark; }
@@ -41,7 +41,7 @@
 </head>
 <body>
   <main class="article-wrap">
-    <a class="back-link" href="blog.html">&#8592; Back to blog</a>
+    <a class="back-link" href="../../blog.html">&#8592; Back to blog</a>
 
     <header>
       <div class="tags">
@@ -57,7 +57,7 @@
       <p>I competed as part of Team 26 in the Horse Plinko Cyber Challenge 4 (HPCC4), a beginner-level blue-team cybersecurity competition hosted at the University of Central Florida. Our team of four defended a five-box Windows and Linux network against a live Red Team while completing business injects. Service uptime accounted for 70% of the score, while business injects accounted for the remaining 30%.</p>
       <p>I worked alongside teammates on three of the five systems: Assembly (Windows Server 2022, Jenkins, and RDP), Guidance (Ubuntu, the PlinkCom web application, and SSH), and Manifest (Windows Server 2019, MariaDB, and RDP). My work focused on system enumeration, threat hunting, investigating suspicious services, reviewing firewall configurations, and troubleshooting service availability.</p>
       <figure class="evidence" style="max-width: 720px; margin: 24px auto 0;">
-        <img src="hpcc4_images/image1.png" alt="Competition host and scored services information for Guidance">
+        <img src="photos/image1.png" alt="Competition host and scored services information for Guidance">
         <figcaption>Competition environment: Guidance ran Ubuntu 22.04 and hosted the scored SSH and PlinkCom HTTP services.</figcaption>
       </figure>
     </section>
@@ -68,7 +68,7 @@
       <p>The most significant finding was a suspicious systemd service named <code>systemd-proc.service</code>, disguised as a system time synchronization helper. The investigation connected the service to a root-level <code>socat</code> listener on TCP port 7777 that executed <code>/bin/bash</code>, indicating a potential backdoor providing remote shell access.</p>
       <p>I investigated the service using <code>ss</code>, <code>systemctl</code>, and <code>journalctl</code>. After identifying the suspicious behavior, I stopped and disabled the service. Subsequent checking showed that the listener was no longer present on port 7777. This was the clearest documented containment action from my investigation.</p>
       <figure class="evidence" style="max-width: 760px; margin: 24px auto 0;">
-        <img src="hpcc4_images/image10.png" alt="Terminal evidence showing the suspicious systemd-proc service status and failure">
+        <img src="photos/image10.png" alt="Terminal evidence showing the suspicious systemd-proc service status and failure">
         <figcaption>Evidence from the systemd-proc.service investigation. The service was stopped and disabled, and the TCP/7777 listener was subsequently reported as closed.</figcaption>
       </figure>
     </section>
@@ -79,15 +79,15 @@
       <p>I also reviewed the server's UFW firewall configuration, identifying allowed inbound ports, denied connections, and additional services that required scrutiny. During troubleshooting, remote SSH connectivity was disrupted, reinforcing the importance of preserving a known-good management path before changing firewall rules.</p>
       <div class="evidence-grid">
         <figure class="evidence">
-          <img src="hpcc4_images/image3.png" alt="SSH service status and authentication log showing DenyUsers rejection">
+          <img src="photos/image3.png" alt="SSH service status and authentication log showing DenyUsers rejection">
           <figcaption>SSH was active and listening on port 22, while authentication logs showed the scoring account being rejected by DenyUsers.</figcaption>
         </figure>
         <figure class="evidence">
-          <img src="hpcc4_images/image4.png" alt="Terminal output showing the jmoney account and repeated SSH authentication failures">
+          <img src="photos/image4.png" alt="Terminal output showing the jmoney account and repeated SSH authentication failures">
           <figcaption>Account and authentication checks used to investigate the repeated SSH login failures.</figcaption>
         </figure>
         <figure class="evidence">
-          <img src="hpcc4_images/image2.png" alt="UFW firewall rules showing allowed and denied inbound ports">
+          <img src="photos/image2.png" alt="UFW firewall rules showing allowed and denied inbound ports">
           <figcaption>UFW firewall review showing scored ports 22 and 80 allowed, along with additional inbound allowances.</figcaption>
         </figure>
       </div>
@@ -99,26 +99,26 @@
       <p>I reviewed the installed Telnet packages and simulated their removal to evaluate the potential impact before making changes. The available evidence confirms that the removal was simulated, not that the packages were actually removed.</p>
       <div class="evidence-grid">
         <figure class="evidence">
-          <img src="hpcc4_images/image6.png" alt="inetd process listening on TCP port 23">
+          <img src="photos/image6.png" alt="inetd process listening on TCP port 23">
           <figcaption>Network enumeration identified an inetd listener bound to TCP port 23.</figcaption>
         </figure>
         <figure class="evidence">
-          <img src="hpcc4_images/image7.png" alt="Commented Telnet configuration entry containing a bash execution argument">
+          <img src="photos/image7.png" alt="Commented Telnet configuration entry containing a bash execution argument">
           <figcaption>The Telnet configuration entry was commented out, but contained a shell-launch argument worth investigating.</figcaption>
         </figure>
         <figure class="evidence">
-          <img src="hpcc4_images/image5.png" alt="APT simulation showing proposed removal of Telnet and inetd packages">
+          <img src="photos/image5.png" alt="APT simulation showing proposed removal of Telnet and inetd packages">
           <figcaption>APT removal simulation used to inspect the proposed package changes before execution.</figcaption>
         </figure>
       </div>
       <p style="margin-top: 24px;">I also investigated a web-service availability issue involving the PlinkCom application. Although Apache was restarted and reported as active, local HTTP requests continued to time out. This demonstrated the importance of validating application functionality rather than relying solely on a running service or open network port.</p>
       <div class="evidence-grid">
         <figure class="evidence">
-          <img src="hpcc4_images/image8.png" alt="Competition scoreboard showing the PlinkCom web check timing out">
+          <img src="photos/image8.png" alt="Competition scoreboard showing the PlinkCom web check timing out">
           <figcaption>The competition scoreboard reported that the web check exceeded its 20-second time limit.</figcaption>
         </figure>
         <figure class="evidence">
-          <img src="hpcc4_images/image9.png" alt="Apache service status after restart">
+          <img src="photos/image9.png" alt="Apache service status after restart">
           <figcaption>Apache reported as active after a restart, but application-level recovery was not confirmed.</figcaption>
         </figure>
       </div>
@@ -153,4 +153,3 @@
   </main>
 </body>
 </html>
-
