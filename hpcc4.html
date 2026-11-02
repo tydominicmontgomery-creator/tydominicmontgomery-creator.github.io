@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0A0E14">
+  <title>Horse Plinko Cyber Challenge 4 | Ty Montgomery</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    /* Article-specific styling; the rest of the site continues to use style.css. */
+    :root { color-scheme: dark; }
+    body { background: #0a0e14; color: #eef1f7; }
+    .article-wrap { width: min(960px, calc(100% - 40px)); margin: 0 auto; padding: 52px 0 80px; }
+    .back-link { display: inline-block; color: #91a9ce; text-decoration: none; margin-bottom: 58px; font-size: 1.05rem; }
+    .back-link:hover { color: #fff; }
+    .tags { display: flex; gap: 10px; margin-bottom: 18px; }
+    .tag { display: inline-block; padding: 6px 13px; border-radius: 999px; background: #191b2c; color: #8b79ff; font-size: .9rem; font-weight: 600; }
+    .tag.blue { background: #102a2b; color: #35d2c2; }
+    .article-title { font-size: clamp(2rem, 5vw, 2.65rem); line-height: 1.15; margin: 0 0 12px; color: #f4f4f6; }
+    .article-meta { color: #8da6ca; font-size: 1.1rem; margin: 0 0 52px; }
+    .article-section { margin: 0 0 42px; }
+    .article-section h2 { color: #f0f1f5; font-size: 1.45rem; margin: 0 0 18px; }
+    .article-section p, .article-section li { color: #e2e6ef; font-size: 1.12rem; line-height: 1.7; }
+    .article-section p { margin: 0 0 15px; }
+    .article-section ul { padding-left: 24px; }
+    .evidence-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; margin-top: 24px; }
+    figure.evidence { margin: 0; padding: 12px; background: #101722; border: 1px solid #263244; border-radius: 12px; overflow: hidden; }
+    figure.evidence img { display: block; width: 100%; height: auto; border-radius: 7px; background: #080b10; }
+    figure.evidence figcaption { color: #9aafd0; font-size: .92rem; line-height: 1.5; padding: 11px 3px 2px; }
+    .evidence-note { color: #9aafd0 !important; font-size: .98rem !important; }
+    .skills { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 15px; }
+    .skills span { border: 1px solid #303b50; border-radius: 999px; padding: 7px 11px; color: #b9c8e0; font-size: .9rem; }
+    @media (max-width: 680px) {
+      .article-wrap { width: min(100% - 30px, 960px); padding-top: 30px; }
+      .back-link { margin-bottom: 40px; }
+      .article-meta { margin-bottom: 38px; }
+      .evidence-grid { grid-template-columns: 1fr; }
+      .article-section p, .article-section li { font-size: 1.03rem; }
+    }
+  </style>
+</head>
+<body>
+  <main class="article-wrap">
+    <a class="back-link" href="blog.html">&#8592; Back to blog</a>
+
+    <header>
+      <div class="tags">
+        <span class="tag">Competition</span>
+        <span class="tag blue">Blue team</span>
+      </div>
+      <h1 class="article-title">Horse Plinko Cyber Challenge 4</h1>
+      <p class="article-meta">Team 26 Blue Team, hosted at UCF, October 17, 2026</p>
+    </header>
+
+    <section class="article-section">
+      <h2>Overview</h2>
+      <p>I competed as part of Team 26 in the Horse Plinko Cyber Challenge 4 (HPCC4), a beginner-level blue-team cybersecurity competition hosted at the University of Central Florida. Our team of four defended a five-box Windows and Linux network against a live Red Team while completing business injects. Service uptime accounted for 70% of the score, while business injects accounted for the remaining 30%.</p>
+      <p>I worked alongside teammates on three of the five systems: Assembly (Windows Server 2022, Jenkins, and RDP), Guidance (Ubuntu, the PlinkCom web application, and SSH), and Manifest (Windows Server 2019, MariaDB, and RDP). My work focused on system enumeration, threat hunting, investigating suspicious services, reviewing firewall configurations, and troubleshooting service availability.</p>
+      <figure class="evidence" style="max-width: 720px; margin: 24px auto 0;">
+        <img src="hpcc4_images/image1.png" alt="Competition host and scored services information for Guidance">
+        <figcaption>Competition environment: Guidance ran Ubuntu 22.04 and hosted the scored SSH and PlinkCom HTTP services.</figcaption>
+      </figure>
+    </section>
+
+    <section class="article-section">
+      <h2>Threat Hunting and Persistence Investigation</h2>
+      <p>One of my primary investigations involved identifying suspicious system activity on Guidance, an Ubuntu 22.04 server. I examined running processes, listening network ports, systemd services, and authentication logs to identify potentially unauthorized activity.</p>
+      <p>The most significant finding was a suspicious systemd service named <code>systemd-proc.service</code>, disguised as a system time synchronization helper. The investigation connected the service to a root-level <code>socat</code> listener on TCP port 7777 that executed <code>/bin/bash</code>, indicating a potential backdoor providing remote shell access.</p>
+      <p>I investigated the service using <code>ss</code>, <code>systemctl</code>, and <code>journalctl</code>. After identifying the suspicious behavior, I stopped and disabled the service. Subsequent checking showed that the listener was no longer present on port 7777. This was the clearest documented containment action from my investigation.</p>
+      <figure class="evidence" style="max-width: 760px; margin: 24px auto 0;">
+        <img src="hpcc4_images/image10.png" alt="Terminal evidence showing the suspicious systemd-proc service status and failure">
+        <figcaption>Evidence from the systemd-proc.service investigation. The service was stopped and disabled, and the TCP/7777 listener was subsequently reported as closed.</figcaption>
+      </figure>
+    </section>
+
+    <section class="article-section">
+      <h2>SSH and Firewall Investigation</h2>
+      <p>I investigated SSH authentication failures affecting the competition's scoring account. Although the SSH daemon was running and listening on port 22, authentication logs repeatedly showed that the <code>jmoney</code> account was rejected because it appeared in <code>DenyUsers</code>. I verified that the account existed and had a password configured, then examined SSH configuration files and authentication logs to investigate the access restriction. The available evidence did not confirm that scoring-account authentication was ultimately restored.</p>
+      <p>I also reviewed the server's UFW firewall configuration, identifying allowed inbound ports, denied connections, and additional services that required scrutiny. During troubleshooting, remote SSH connectivity was disrupted, reinforcing the importance of preserving a known-good management path before changing firewall rules.</p>
+      <div class="evidence-grid">
+        <figure class="evidence">
+          <img src="hpcc4_images/image3.png" alt="SSH service status and authentication log showing DenyUsers rejection">
+          <figcaption>SSH was active and listening on port 22, while authentication logs showed the scoring account being rejected by DenyUsers.</figcaption>
+        </figure>
+        <figure class="evidence">
+          <img src="hpcc4_images/image4.png" alt="Terminal output showing the jmoney account and repeated SSH authentication failures">
+          <figcaption>Account and authentication checks used to investigate the repeated SSH login failures.</figcaption>
+        </figure>
+        <figure class="evidence">
+          <img src="hpcc4_images/image2.png" alt="UFW firewall rules showing allowed and denied inbound ports">
+          <figcaption>UFW firewall review showing scored ports 22 and 80 allowed, along with additional inbound allowances.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="article-section">
+      <h2>Service and Network Security Investigation</h2>
+      <p>Another area of investigation involved a Telnet exposure on TCP port 23. Network enumeration revealed an <code>inetd</code> process listening on this port. I examined the associated configuration files and discovered a commented-out Telnet entry containing a <code>/bin/bash</code> execution argument. Because the entry was commented out, I could not establish that it was responsible for the active listener.</p>
+      <p>I reviewed the installed Telnet packages and simulated their removal to evaluate the potential impact before making changes. The available evidence confirms that the removal was simulated, not that the packages were actually removed.</p>
+      <div class="evidence-grid">
+        <figure class="evidence">
+          <img src="hpcc4_images/image6.png" alt="inetd process listening on TCP port 23">
+          <figcaption>Network enumeration identified an inetd listener bound to TCP port 23.</figcaption>
+        </figure>
+        <figure class="evidence">
+          <img src="hpcc4_images/image7.png" alt="Commented Telnet configuration entry containing a bash execution argument">
+          <figcaption>The Telnet configuration entry was commented out, but contained a shell-launch argument worth investigating.</figcaption>
+        </figure>
+        <figure class="evidence">
+          <img src="hpcc4_images/image5.png" alt="APT simulation showing proposed removal of Telnet and inetd packages">
+          <figcaption>APT removal simulation used to inspect the proposed package changes before execution.</figcaption>
+        </figure>
+      </div>
+      <p style="margin-top: 24px;">I also investigated a web-service availability issue involving the PlinkCom application. Although Apache was restarted and reported as active, local HTTP requests continued to time out. This demonstrated the importance of validating application functionality rather than relying solely on a running service or open network port.</p>
+      <div class="evidence-grid">
+        <figure class="evidence">
+          <img src="hpcc4_images/image8.png" alt="Competition scoreboard showing the PlinkCom web check timing out">
+          <figcaption>The competition scoreboard reported that the web check exceeded its 20-second time limit.</figcaption>
+        </figure>
+        <figure class="evidence">
+          <img src="hpcc4_images/image9.png" alt="Apache service status after restart">
+          <figcaption>Apache reported as active after a restart, but application-level recovery was not confirmed.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="article-section">
+      <h2>Skills and Tools Used</h2>
+      <ul>
+        <li><strong>Linux system administration:</strong> Process enumeration, systemd service management, SSH configuration, and system troubleshooting.</li>
+        <li><strong>Threat hunting:</strong> Investigating suspicious processes, network listeners, authentication logs, and potential persistence mechanisms.</li>
+        <li><strong>Network security:</strong> Reviewing firewall rules, listening ports, and exposed network services.</li>
+        <li><strong>Incident response:</strong> Identifying suspicious activity, investigating potential backdoors, and performing containment.</li>
+        <li><strong>Service monitoring:</strong> Troubleshooting SSH and Apache availability and validating application-level functionality.</li>
+      </ul>
+      <div class="skills">
+        <span>Linux CLI</span><span>SSH</span><span>UFW</span><span>systemctl</span><span>journalctl</span><span>ss</span><span>grep</span><span>curl</span><span>APT</span>
+      </div>
+    </section>
+
+    <section class="article-section">
+      <h2>Lessons Learned</h2>
+      <p>This competition strengthened my understanding of how blue-team operations work in a live environment. One of my biggest takeaways was the importance of evidence-based threat hunting. Rather than immediately terminating suspicious processes, it is important to correlate processes, executable paths, service configurations, and network activity before taking action.</p>
+      <p>I also learned that restoring a service requires more than simply restarting its associated process. Services must be tested at the application level to confirm that they are actually functioning as intended. The competition reinforced the importance of making careful firewall changes, maintaining remote administrative access, and documenting remediation efforts during incident response.</p>
+    </section>
+
+    <section class="article-section">
+      <h2>Conclusion</h2>
+      <p>HPCC4 gave me practical experience defending Windows and Linux infrastructure against active adversarial activity. I gained hands-on experience investigating suspicious system services, identifying potential backdoors, analyzing authentication failures, reviewing firewall configurations, and troubleshooting critical services.</p>
+      <p>The most significant documented outcome of my investigation was containing the suspicious systemd-backed shell listener on TCP port 7777. Although some service recovery efforts remained unresolved, the experience provided valuable insight into real-world blue-team workflows, incident investigation, and infrastructure defense.</p>
+      <p class="evidence-note">Note: The screenshots shown above are selected evidence from the competition after-action report. They document observed states and investigation steps; they do not independently verify every attempted remediation.</p>
+    </section>
+  </main>
+</body>
+</html>
